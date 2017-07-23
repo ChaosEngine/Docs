@@ -127,6 +127,41 @@ Like all cache implementations, your app should get and set cache values using a
 > [!NOTE]
 > The `ConnectionString` (and optionally, `SchemaName` and `TableName`) should typically be stored outside of source control (such as UserSecrets), as they may contain credentials.
 
+## Using a MySQL Server Distributed Cache
+
+The MySQLCache implementation allows the distributed cache to use a MySQL server database as its backing store. To create MySQL server table you can use mysql-cache tool, the tool creates a table with the name and schema you specify.
+
+To use the mysql-cache tool, add `Pomelo.Extensions.Caching.MySqlConfig.Tools` to the `<ItemGroup>` element of the *.csproj* file and run dotnet restore.
+
+[!code-csharp[Main](./distributed/sample/src/DistCacheSample/DistCacheSample.csproj?range=23-25)]
+
+Test Pomelo.Extensions.Caching.MySqlConfig.Tools by running the following command
+
+```none
+C:\DistCacheSample\src\DistCacheSample>dotnet mysql-cache create --help
+   ```
+
+mysql-cache tool  will display usage, options and command help, now you can create tables into mysql, running "mysql-cache create" command :
+
+```none
+C:\DistCacheSample\src\DistCacheSample>dotnet mysql-cache create "Server=192.168.0.1;Database=database;User Id=user;Password=P@ssw0rd;" TestDataBase TestDataBase
+   info: Pomelo.Extensions.Caching.MySqlConfig.Tools.Program[0]
+       Table and index were created successfully.
+   ```
+
+The created table has the following schema:
+
+CREATE TABLE `CacheTest` (
+  `Id` varchar(449) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  `AbsoluteExpiration` datetime(6) DEFAULT NULL,
+  `ExpiresAtTime` datetime(6) NOT NULL,
+  `SlidingExpirationInSeconds` bigint(20) DEFAULT NULL,
+  `Value` longblob NOT NULL,
+  PRIMARY KEY (`Id`),
+  KEY `Index_ExpiresAtTime` (`ExpiresAtTime`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8
+
+
 ## Recommendations
 
 When deciding which implementation of `IDistributedCache` is right for your app, choose between Redis and SQL Server based on your existing infrastructure and environment, your performance requirements, and your team's experience. If your team is more comfortable working with Redis, it's an excellent choice. If your team prefers SQL Server, you can be confident in that implementation as well. Note that A traditional caching solution stores data in-memory which allows for fast retrieval of data. You should store commonly used data in a cache and store the entire data in a backend persistent store such as SQL Server or Azure Storage. Redis Cache is a caching solution which gives you high throughput and low latency as compared to SQL Cache.
